@@ -11,6 +11,33 @@ export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch stress/fatigue prediction
+  useEffect(() => {
+    fetch("/api/focusflow/stress")
+      .then(res => res.json())
+      .then(data => {
+        console.log("Stress data:", data);
+        setStressScore(data.stressScore);
+      })
+      .catch(err => console.error("Stress API failed:", err));
+  }, []);
+
+  // Fetch study schedule
+  useEffect(() => {
+    fetch("/api/focusflow/schedule")
+      .then(res => res.json())
+      .then(data => setSchedule(data.schedule))
+      .catch(err => console.error("Schedule API failed:", err));
+  }, []);
+
+  // Fetch related documents/resources
+  useEffect(() => {
+    fetch("/api/focusflow/resources")
+      .then(res => res.json())
+      .then(data => setResources(data.documents))
+      .catch(err => console.error("Resources API failed:", err));
+  }, []);
+
   // Function to call Claude via Bedrock
   const fetchClaude = async () => {
     if (!prompt) return;
@@ -19,13 +46,16 @@ export default function Dashboard() {
     setClaudeResponse(null);
 
     try {
-      const res = await fetch("/api/focusflow/bedrock/route", {
+      const res = await fetch("/Users/saishalakkoju/dub25/src/app/api/auth/focusflow/bedrock/route", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: "test" }),
       });
       
-      const data = await res.json();
+      const text = await res.text(); // <- just read raw text
+      console.log("Raw response:", text);
+      const data = JSON.parse(text); // or response.json()
+
 
       if (data.result) setClaudeResponse(data.result);
       else if (data.error) setError(data.error);
